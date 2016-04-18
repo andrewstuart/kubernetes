@@ -63,14 +63,17 @@ kube::log::status "Starting kube-apiserver"
 "${KUBE_OUTPUT_HOSTBIN}/kube-apiserver" \
   --insecure-bind-address="${API_HOST}" \
   --bind-address="${API_HOST}" \
+  $(kube::etcd::kubesec) \
   --insecure-port="${API_PORT}" \
-  --etcd-servers="http://${ETCD_HOST}:${ETCD_PORT}" \
+  --etcd-servers="${ETCD_PROTO}://${ETCD_HOST}:${ETCD_PORT}" \
   --advertise-address="10.10.10.10" \
   --cert-dir="${TMP_DIR}/certs" \
   --service-cluster-ip-range="10.0.0.0/24" >/tmp/swagger-api-server.log 2>&1 &
+
 APISERVER_PID=$!
 
 kube::util::wait_for_url "${API_HOST}:${API_PORT}/healthz" "apiserver: "
+echo $APISERVER_PID
 
 SWAGGER_API_PATH="${API_HOST}:${API_PORT}/swaggerapi/"
 DEFAULT_GROUP_VERSIONS="v1 apps/v1alpha1 authentication.k8s.io/v1beta1 authorization.k8s.io/v1beta1 autoscaling/v1 batch/v1 batch/v2alpha1 extensions/v1beta1 certificates.k8s.io/v1alpha1 policy/v1alpha1 rbac.authorization.k8s.io/v1alpha1 storage.k8s.io/v1beta1"
