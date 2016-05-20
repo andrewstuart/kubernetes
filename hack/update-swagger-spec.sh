@@ -57,7 +57,7 @@ ETCD_PROTO=${ETCD_PROTO:-"http"}
 API_PORT=${API_PORT:-8050}
 API_HOST=${API_HOST:-127.0.0.1}
 
-kube::etcd::start
+kube::etcd::ensure
 
 # Start kube-apiserver
 kube::log::status "Starting kube-apiserver"

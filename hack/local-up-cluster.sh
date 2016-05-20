@@ -57,6 +57,7 @@ fi
 
 ETCD_PORT=${ETCD_PORT:-4001}
 ETCD_PROTO=${ETCD_PROTO:-"http"}
+ETCD_USE_EXISTING=${ETCD_USE_EXISTING:-false}
 
 cd "${KUBE_ROOT}"
 
@@ -252,11 +253,6 @@ cleanup()
   [[ -n "${ETCD_DIR-}" ]] && kube::etcd::clean_etcd_dir
 
   exit 0
-}
-
-function startETCD {
-    echo "Starting etcd"
-    kube::etcd::start
 }
 
 function set_service_accounts {
@@ -549,7 +545,9 @@ if [[ "${ENABLE_DAEMON}" = false ]]; then
 trap cleanup EXIT
 fi
 echo "Starting services now!"
-startETCD
+
+kube::etcd::ensure
+
 set_service_accounts
 start_apiserver
 start_controller_manager
