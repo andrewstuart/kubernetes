@@ -19,6 +19,7 @@
 ETCD_VERSION=${ETCD_VERSION:-2.2.1}
 ETCD_HOST=${ETCD_HOST:-127.0.0.1}
 ETCD_PORT=${ETCD_PORT:-2379}
+ETCD_PROTO=${ETCD_PROTO:-"http"}
 
 kube::etcd::kubesec() {
   if [[ ! -z "${ETCD_CERT_PATH:-}" ]] && [[ ! -z "${ETCD_KEY_PATH:-}" ]]
