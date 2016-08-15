@@ -274,7 +274,7 @@ function start_apiserver {
     fi
     # This is the default dir and filename where the apiserver will generate a self-signed cert
     # which should be able to be used as the CA to verify itself
-    CERT_DIR=/var/run/kubernetes
+    CERT_DIR=${CERT_DIR:-/var/run/kubernetes}
     ROOT_CA_FILE=$CERT_DIR/apiserver.crt
 
     priv_arg=""
