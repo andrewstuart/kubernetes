@@ -19,6 +19,7 @@ package kubelet
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/kubernetes/pkg/api/v1"
@@ -29,6 +30,15 @@ import (
 	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/volume"
 )
+
+const wrappingPrefix = "wrapped_"
+
+func wrapperName(s string) string {
+	if !strings.HasPrefix(s, wrappingPrefix) {
+		s = wrappingPrefix + s
+	}
+	return s
+}
 
 // NewInitializedVolumePluginMgr returns a new instance of
 // volume.VolumePluginMgr initialized with kubelets implementation of the
@@ -85,20 +95,17 @@ func (kvh *kubeletVolumeHost) NewWrapperMounter(
 	spec volume.Spec,
 	pod *v1.Pod,
 	opts volume.VolumeOptions) (volume.Mounter, error) {
-	// The name of wrapper volume is set to "wrapped_{wrapped_volume_name}"
-	wrapperVolumeName := "wrapped_" + volName
+
 	if spec.Volume != nil {
-		spec.Volume.Name = wrapperVolumeName
+		spec.Volume.Name = wrapperName(volName)
 	}
 
 	return kvh.kubelet.newVolumeMounterFromPlugins(&spec, pod, opts)
 }
 
 func (kvh *kubeletVolumeHost) NewWrapperUnmounter(volName string, spec volume.Spec, podUID types.UID) (volume.Unmounter, error) {
-	// The name of wrapper volume is set to "wrapped_{wrapped_volume_name}"
-	wrapperVolumeName := "wrapped_" + volName
 	if spec.Volume != nil {
-		spec.Volume.Name = wrapperVolumeName
+		spec.Volume.Name = wrapperName(volName)
 	}
 
 	plugin, err := kvh.kubelet.volumePluginMgr.FindPluginBySpec(&spec)

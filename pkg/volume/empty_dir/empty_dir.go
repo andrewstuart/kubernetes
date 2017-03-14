@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"regexp"
 
 	"github.com/golang/glog"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,7 +50,11 @@ type emptyDirPlugin struct {
 	host volume.VolumeHost
 }
 
-var _ volume.VolumePlugin = &emptyDirPlugin{}
+var (
+	_ volume.VolumePlugin = &emptyDirPlugin{}
+
+	deletingRE = regexp.MustCompile(`.deleting~\d+$`)
+)
 
 const (
 	emptyDirPluginName = "kubernetes.io/empty-dir"
@@ -329,11 +334,14 @@ func (ed *emptyDir) TearDownAt(dir string) error {
 }
 
 func (ed *emptyDir) teardownDefault(dir string) error {
-	tmpDir, err := volume.RenameDirectory(dir, ed.volName+".deleting~")
-	if err != nil {
-		return err
+	var err error
+	if !deletingRE.MatchString(dir) {
+		dir, err = volume.RenameDirectory(dir, ed.volName+".deleting~")
+		if err != nil {
+			return err
+		}
 	}
-	err = os.RemoveAll(tmpDir)
+	err = os.RemoveAll(dir)
 	if err != nil {
 		return err
 	}
