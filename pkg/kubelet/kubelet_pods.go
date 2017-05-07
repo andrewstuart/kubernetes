@@ -30,6 +30,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/golang/glog"
@@ -148,8 +149,19 @@ func makeMounts(pod *v1.Pod, podDir string, container *v1.Container, hostName, h
 			// when the pod specifies an fsGroup, and if the directory is not created here, Docker will
 			// later auto-create it with the incorrect mode 0750
 			if err := os.MkdirAll(hostPath, perm); err != nil {
-				glog.Errorf("failed to mkdir:%s", hostPath)
-				return nil, err
+				glog.Errorf("failed to mkdir: %s", hostPath)
+				switch err := err.(type) {
+				case *os.PathError:
+					if err.Err == syscall.ENOTDIR {
+						// If the path already exists and is not a directory then we are
+						// mounting a single file (which is already there) and don't care
+						// the MkdirAll failed.
+						break
+					}
+					return nil, err
+				default:
+					return nil, err
+				}
 			}
 
 			// chmod the sub path because umask may have prevented us from making the sub path with the same
